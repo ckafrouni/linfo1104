@@ -14,6 +14,7 @@ in
     {Browse L5}
     {Browse L4bis}
     {Browse L2.2}
+    {L3.1 }
 end
 
 declare
@@ -25,18 +26,16 @@ fun {Tail Xs} Xs.2 end
 
 /* Exo 2 */
 
-% TODO Quel est l'invariant utilisé
-
 local
     fun {Length Xs}
-        fun {Inner Acc Xs}
+        fun {Inner Xs Acc}
             case Xs
             of nil then Acc
-            [] H|T then {Inner Acc+1 T}
+            [] H|T then {Inner T  Acc+1}
             end
         end
     in
-        {Inner 0 Xs}
+        {Inner Xs 0}
     end
 in
     {Browse {Length [r a p h]}} % affiche 4
@@ -47,19 +46,12 @@ end
 
 /* Exo 3 */
 
-% TODO Maybe append in reverse ?
-
 local
     fun {Append Xs Ys}
-        fun {Inner Acc Xs Ys}
-            case Xs
-            of nil then Acc|Ys
-            [] H|T then {Inner Acc|H T Ys}
-            end
+        case Xs
+        of nil then Ys
+        [] H|T then H|{Append T Ys}
         end
-        Acc
-    in
-        {Inner Acc Xs Ys}
     end
 in
     {Browse {Append [r a] [p h]}} % affiche [r a p h]
@@ -84,23 +76,6 @@ end
 {Browse {IsList nil}}
 
 /* Exo 5 */
-
-% TODO Peut-on tout convertir en Tail recursive ?
-declare
-fun {Take Xs N}
-    fun {Inner Acc Xs N}
-        if N==0 then Acc
-        else
-            case Xs
-            of nil then Acc
-            [] H|T then {Inner Acc|H T N-1}
-            end
-        end
-    end
-in
-    {Inner nil Xs N}|nil
-end
-{Browse {Take [1 2 3 4 5] 2}}
 
 declare
 fun {Take Xs N}
@@ -153,26 +128,6 @@ end
 /* Exo 8 */
 
 declare
-fun {Prefix L1 L2}
-    case L1 
-    of nil then true
-    [] H1|T1 then 
-        case L2
-        of nil then false
-        [] H2|T2 then
-            if H1==H2 then
-                {Prefix T1 T2}
-            else false
-            end
-        end
-    end
-end
-{Browse {Prefix [1 2 1] [1 2 3 4]}} % affiche false
-{Browse {Prefix [1 2 3] [1 2 3 4]}} % affiche true
-
-% TODO Can we make FindString tail recursive ?
-
-declare
 fun {FindString Xs Ys}
     fun {Inner I Xs Ys}
         case Ys
@@ -191,3 +146,184 @@ end
 {Browse {FindString [a b a b] [a b a b a b]}} % affiche [1 3]
 {Browse {FindString [a] [a b a b a b]}} % affiche [1 3 5]
 {Browse {FindString [c] [a b a b a b]}} % affiche nil
+
+
+/* Exo 9 */
+declare
+Carte = carte(menu(entree: 'salade verte aux lardons'
+                    plat: 'steak frites'
+                    prix: 10)
+                menu(entree: 'salade de crevettes grises'
+                    plat: 'saumon fume et pommes de terre'
+                    prix: 12)
+                menu(plat: 'choucroute garnie'
+                    prix: 9))
+SecMenu=Carte.2
+{Browse SecMenu}
+{Browse SecMenu.plat}
+{Browse Carte.1.entree}
+{Browse {Arity Carte}}
+{Browse {Arity Carte.1}}
+
+/* Exo 10 */
+
+% Pre-Order traversal
+% <btree T> ::= empty | btree(T left:<btree T> right:<btree T>)
+
+declare
+fun {Promenade BT}
+    case BT
+    of empty then nil
+    [] btree(Value left:Left right:Right) then
+        Value|{Append {Promenade Left} {Promenade Right}}
+    end
+end
+
+%% affiche [42 26 54 18 37 11]
+{Browse
+    {Promenade
+        btree(42
+            left: btree(26
+                left: btree(54
+                    left: empty
+                    right: btree(18
+                        left: empty
+                        right: empty))
+                    right: empty)
+            right: btree(37
+                left: btree(11
+                    left: empty
+                    right: empty)
+                right: empty))}}
+
+
+/* Exo 11 */
+
+declare
+fun {DictionaryFilter D F}
+    % Initialize an empty list for storing filtered elements
+    local
+        fun {Filter D Acc}
+            % Base case: if D is a leaf, return the accumulated list
+            case D
+            of leaf then Acc
+            else
+                % D is a node: check if the node satisfies the predicate F
+                if {F D.info} then
+                    % If true, include this node's key and info in the list
+                    {Filter D.left {Filter D.right (D.key#D.info)|Acc}}
+                else
+                    % Otherwise, continue filtering the left and right subtrees
+                    {Filter D.left {Filter D.right Acc}}
+                end
+            end
+        end
+    in
+        % Start filtering from the root of the dictionary with an empty list
+        {Filter D nil}
+    end
+end
+
+local
+    Old Class Val
+in
+    Class = dict(key:10
+                info:person('Christian'19)
+                left:dict(key:7
+                    info:person('Denys'25)
+                    left:leaf
+                    right:dict(key:9
+                        info:person('David'7)
+                        left:leaf
+                        right:leaf))
+                right:dict(key:18
+                    info:person('Rose'12)
+                    left:dict(key:14
+                        info:person('Ann'27)
+                        left:leaf
+                        right:leaf)
+                    right:leaf))
+    fun {Old Info}
+        Info.2 > 20
+    end
+    Val = {DictionaryFilter Class Old}
+    {Browse Val} % Val --> [7#person('Denys'25) 14#person('Ann'27)]
+end
+
+/* Exo 12 */
+local
+    T1 T2
+in
+{Browse '|'(a b)}
+{Browse {IsList '|'(a b)}} % false
+{Browse {IsTuple '|'(a b)}} % true
+{Browse {IsRecord'|'(a b)}} % true
+
+{Browse '|'(a '|'(b nil))}
+{Browse {IsList '|'(a '|'(b nil))}} % false
+{Browse {IsTuple '|'(a '|'(b nil))}} % true
+{Browse {IsRecord'|'(a '|'(b nil))}} % true
+
+{Browse '|'(2:nil a)}
+{Browse {IsList '|'(2:nil a)}} % false
+{Browse {IsTuple '|'(2:nil a)}} % true
+{Browse {IsRecord'|'(2:nil a)}} % true
+
+{Browse tree(v:a T1 T2)}
+{Browse {IsList tree(v:a T1 T2)}} % false
+{Browse {IsTuple tree(v:a T1 T2)}} % true
+{Browse {IsRecord tree(v:a T1 T2)}} % true
+end
+
+/* Exo 13 */
+
+declare
+fun {Applique Xs F}
+    case Xs
+    of nil then nil
+    [] H|T then {F H}|{Applique T F}
+    end
+end
+
+declare
+fun {Lol X} lol(X) end
+{Browse {Applique [1 2 3] Lol}} % Affiche [lol(1) lol(2) lol(3)]
+
+declare
+fun {MakeAdder N}
+    fun {$ X}
+        X + N
+    end
+end
+
+declare
+Add5 = {MakeAdder 5}
+{Browse {Add5 13}} % 18
+
+declare
+fun {AddAll Xs N}
+    {Applique Xs {MakeAdder N}}
+end
+{Browse {AddAll [1 2 3 4 5] 10}}
+
+/* Exo 14 */
+
+{Browse [1 2 3 4]}
+{Browse label#{Label [1 2 3 4]}}
+{Browse width#{Width [1 2 3 4]}}
+{Browse arity#{Arity [1 2 3 4]}}
+{Browse length#{Length [1 2 3 4]}}
+
+{Browse a#b#c}
+{Browse label#{Label a#b#c}}
+{Browse width#{Width a#b#c}}
+{Browse arity#{Arity a#b#c}}
+
+declare
+fun {SameLength Xs Ys}
+    case Xs#Ys
+    of nil#nil then true
+    [] (_|Xr)#(_|Yr) then {SameLength Xr Yr}
+    else false
+    end
+end
