@@ -327,3 +327,75 @@ fun {SameLength Xs Ys}
     else false
     end
 end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% EXTRA
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+/* Exo 1 */
+
+local 
+    fun {Flatten Xs}
+        case Xs
+        of nil then nil
+        [] H|T then
+            case H
+            of _|_ then
+                {Append {Flatten H} {Flatten T}}
+            else
+                H|{Flatten T}
+            end
+        end
+    end
+in
+    % [a [b [c d]] e [[[f]]]]
+    % a|(b|(c|d|nil)|nil)|e|(((f|nil)|nil)|nil)|nil
+    {Browse {Flatten [a [b [c d]] e [[[f]]]]}} % affiche [a b c d e f]
+end
+
+/* Exo 2 */
+
+declare 
+fun {AddDigits D1 D2 CI}
+    local
+        Sum = D1 + D2 + CI
+    in
+        if Sum == 0 then [0 0]
+        elseif Sum == 1 then [1 0]
+        elseif Sum == 2 then [0 1]
+        elseif Sum == 3 then [1 1]
+        end
+    end  
+end
+fun {Add B1 B2}
+    % A helper function that behaves like a fold right for binary addition.
+    fun {FoldRBinary B1 B2 CI Acc}
+        case B1#B2
+        of nil#nil then
+            if CI==0 then Acc else CI|Acc end
+        [] (H1|T1)#nil then
+            {FoldRBinary T1 nil {AddDigits H1 0 CI}.2 {AddDigits H1 0 CI}.1|Acc}
+        [] nil#(H2|T2) then
+            {FoldRBinary nil T2 {AddDigits 0 H2 CI}.2 {AddDigits 0 H2 CI}.1|Acc}
+        [] (H1|T1)#(H2|T2) then
+            {FoldRBinary T1 T2 {AddDigits H1 H2 CI}.2 {AddDigits H1 H2 CI}.1|Acc}
+        end
+    end
+in
+    % Start the fold with both lists, an initial carry of 0, and an empty accumulator.
+    {FoldRBinary {Reverse B1} {Reverse B2} 0 nil}
+end
+
+{Browse {Add [1 1 0 1 1 0] [0 1 0 1 1 1]}} % affiche [1 0 0 1 1 0 1]
+
+% declare
+% fun {DecToBin X}
+%     fun {Inner X}
+%         if X == 0 then nil
+%         else (X mod 2)|{Inner X div 2}
+%         end
+%     end
+% in
+%     {Reverse {Inner X}}
+% end
