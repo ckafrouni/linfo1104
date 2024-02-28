@@ -1,3 +1,24 @@
+% Execution state
+(
+    ST,    % semantic stack
+    sigma  % single assignement memory
+)
+
+% ST = semantic stack
+[
+    (<s>, E), % semantic instruction
+    % ...
+]
+
+% sigma = single assignement memory
+{x1=10, p1=..semantic instruction}
+
+% E = Environment
+{X->x, Y->y}
+
+
+
+
 /* Exo 1 */
 declare
 fun {Sum N}

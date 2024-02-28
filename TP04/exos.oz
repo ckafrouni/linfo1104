@@ -127,8 +127,8 @@ local
         end
     end
 in
-    {Browse {FoldL [1 2 3 4] Number.'*' 1}}
-    {Browse {FoldL [1 2 3 4] Number.'-' 0}}
+    {Browse {FoldR [1 2 3 4] Number.'*' 1}}
+    {Browse {FoldR [1 2 3 4] Number.'-' 0}}
 end
 
 
@@ -153,8 +153,55 @@ end
 
 /* Exo 5 */
 
+local
+    fun {Convertir T O V} T*V + O end
+    fun {MakeConverter T O} fun {$ V} {Convertir T O V} end end
+    PiedToMeter={MakeConverter 0.3048 0.}
+    FahrenheitToCelcius={MakeConverter 0.56 ~17.78}
+in
+    {Browse {PiedToMeter 1000.}}
+    {Browse {FahrenheitToCelcius 100.}}
+end
 
 /* Exo 6 */
+
+local
+    fun {PipeLine N}
+        P1 P2 P3 in
+        P1 = {GenerateList N}
+        P2 = {MyFilter P1 fun {$ X} X mod 2 \= 0 end}
+        P3 = {MyMap P2 fun {$ X} X * X end}
+        {MyFoldL P3 fun {$ Acc X} X + Acc end 0}
+    end
+    fun {GenerateList N}
+        if N == 0 then nil
+        else N|{GenerateList N-1}
+        end
+    end
+    fun {MyFilter L F}
+        case L
+        of nil then nil
+        [] H|T then
+            if {F H} then H|{MyFilter T F}
+            else {MyFilter T F}
+            end
+        end
+    end
+    fun {MyMap L F}
+        case L
+        of nil then nil
+        [] H|T then {F H}|{MyMap T F}
+        end
+    end
+    fun {MyFoldL L F Acc}
+        case L
+        of nil then Acc
+        [] H|T then {MyFoldL T F {F Acc H}}
+        end
+    end
+in
+    {Browse {PipeLine 5}}
+end
 
 
 /* Exo 7 */
@@ -175,4 +222,104 @@ local Y LB in
     end
 end
 
-% TODO execution
+% TODO, when do I split a semantic instruction into multiple ?
+
+([
+    (Y=10
+     LB=proc {$ X ?Z} %
+        local Cond in %
+            Cond=(X>=Y) %
+            if Cond then Z=X %
+            else Z=Y end
+        end
+    end
+    local Y Z in %
+        Y=15 %
+        {LB 5 Z}
+        {Browse Z}
+    end
+    ,{Browse->browse, Y->y1, LB->lb})
+ ],{
+    browse=(proc {$ X} ... end, {...}),
+    y1, lb
+ })
+=>
+([
+    (LB=proc {$ X ?Z} %
+        local Cond in %
+            Cond=(X>=Y) %
+            if Cond then Z=X %
+            else Z=Y end
+        end
+    end
+    local Y Z in %
+        Y=15 %
+        {LB 5 Z}
+        {Browse Z}
+    end
+    ,{Browse->browse, Y->y1, LB->lb})
+ ],{
+    browse=(proc {$ X} ... end, {...}),
+    y1=10, lb
+ })
+=>
+([
+    (
+    local Y Z in %
+        Y=15 %
+        {LB 5 Z}
+        {Browse Z}
+    end
+    ,{Browse->browse, Y->y1, LB->lb})
+ ],{
+    browse=(proc {$ X} ... end, {...}),
+    y1=10,
+    lb=(proc {$ X ?Z} %
+        local Cond in %
+            Cond=(X>=Y) %
+            if Cond then Z=X %
+            else Z=Y end
+        end
+    end, {Browse->browse, Y->y1, LB->lb})
+ })
+=>
+([
+    (
+    Y=15 %
+    {LB 5 Z}
+    {Browse Z}
+    ,{Browse->browse, Y->y2, LB->lb, Z->z})
+ ],{
+    browse=(proc {$ X} ... end, {...}),
+    y1=10,
+    lb=(proc {$ X ?Z} %
+        local Cond in %
+            Cond=(X>=Y) %
+            if Cond then Z=X %
+            else Z=Y end
+        end
+    end, {Browse->browse, Y->y1, LB->lb}),
+    y2,
+    z
+ })
+=>
+([
+    (
+    {LB 5 Z}
+    {Browse Z}
+    ,{Browse->browse, Y->y2, LB->lb, Z->z})
+ ],{
+    browse=(proc {$ X} ... end, {...}),
+    y1=10,
+    lb=(proc {$ X ?Z} %
+        local Cond in %
+            Cond=(X>=Y) %
+            if Cond then Z=X %
+            else Z=Y end
+        end
+    end, {Browse->browse, Y->y1, LB->lb}),
+    y2=15,
+    z
+ })
+=>
+% TODO fix the instruction split and continue
