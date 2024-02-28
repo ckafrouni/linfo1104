@@ -108,7 +108,7 @@ end
 /* Exo 3 */
 
 local
-    fun {FoldL L F Acc}
+    fun {FoldL L F Acc} % tail-recursive
         case L
         of nil then Acc
         [] H|T then {FoldL T F {F Acc H}}
@@ -119,7 +119,17 @@ in
     {Browse {FoldL [1 2 3 4] Number.'-' 0}}
 end
 
-% TODO comment implémenter FoldR ?
+local
+    fun {FoldR L F Acc} % not tail-recursive
+        case L
+        of nil then Acc
+        [] H|T then {F H {FoldR T F Acc}}
+        end
+    end
+in
+    {Browse {FoldL [1 2 3 4] Number.'*' 1}}
+    {Browse {FoldL [1 2 3 4] Number.'-' 0}}
+end
 
 
 /* Exo 4 */
