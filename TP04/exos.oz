@@ -409,3 +409,29 @@ end
     z=10, % printed
     cond=false,
 })
+
+
+/* (Extra) Conversion de Map en fonction tail récursif */
+
+% fun {Map L F}
+%     case L
+%     of nil then nil
+%     [] H|T then {F H}|{Map T F} % comment rendre cela tail-récursif ?
+%     end
+% end
+
+local Map in
+    Map=proc {$ L F ?R}
+        case L of nil then R=nil
+        else
+            case L of H|T then
+                local H2 T2 in
+                    R=H2|T2 % On assigne R à des variables 'unbound'
+                    {F H H2} % On 'bound' H2
+                    {Map T F T2} % On 'bound' T2
+                end
+            end
+        end
+    end
+    {Browse {Map [1 2 3 4] fun {$ X} X*X end $}} % le $ est du sucre syntaxique, c'est remplacé par un local X in {Map ... X} {Browse X} end
+end
