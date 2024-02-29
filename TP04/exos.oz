@@ -435,3 +435,9 @@ local Map in
     end
     {Browse {Map [1 2 3 4] fun {$ X} X*X end $}} % le $ est du sucre syntaxique, c'est remplacé par un local X in {Map ... X} {Browse X} end
 end
+
+% TODO
+% la composition fonctionnelle (Compose)
+% l'encapsulation (Inc/Zero)
+% l'execution retardée (IfTrue)
+% structure de controle (While)
