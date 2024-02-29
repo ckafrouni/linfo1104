@@ -1,55 +1,32 @@
-% Execution state
-(
-    ST,    % semantic stack
-    sigma  % single assignement memory
-)
-
-% ST = semantic stack
-[
-    (<s>, E), % semantic instruction
-    % ...
-]
-
-% sigma = single assignement memory
-{x1=10, p1=..semantic instruction}
-
-% E = Environment
-{X->x, Y->y}
-
-
-
-
 /* Exo 1 */
+
+% 1.
 declare
 fun {Sum N}
     if N == 1 then 1
     else N*N + {Sum N-1} end
 end
-{Browse {Sum 3}}
 
-declare
-proc {Sum N ?R}
-    local One Cond in
-        One = 1
-        Cond = (N == One)
-        if Cond then 
-            R = One
-        else 
-            local X N2 R1 in
-                X = N*N
-                N2 = N-1
-                {Sum N2 R1}
-                R = X + R1
+local Sum in 
+    Sum=proc {$ N ?R}
+        local One Cond in
+            One = 1
+            Cond=(N==One)
+            if Cond then 
+                R = One
+            else 
+                local X N2 R1 in
+                    X = N*N
+                    N2 = N-1
+                    {Sum N2 R1}
+                    R = X + R1
+                end
             end
         end
     end
 end
-local R in
-    {Sum 3 R}
-    {Browse R}
-end
 
-%%
+% 2.
 declare
 fun {SumAux N Acc}
     if N == 1 then Acc + 1
@@ -59,36 +36,33 @@ fun {Sum N}
     {SumAux N 0}
 end
 
-declare
-proc {SumAux N Acc ?R}
-    local One Cond in
-        One = 1
-        Cond = (N == 1)
-        if Cond then
-            R = Acc + One
-        else
-            local NDec NN Acc2 in
-                NDec = N - One
-                NN = N * N
-                Acc2 = NN + Acc
-                {SumAux NDec Acc2 R}
+local SumAux Sum in
+    SumAux=proc {$ N Acc ?R}
+        local One Cond in
+            One = 1
+            Cond = (N == 1)
+            if Cond then
+                R = Acc + One
+            else
+                local NDec NN Acc2 in
+                    NDec = N - One
+                    NN = N * N
+                    Acc2 = NN + Acc
+                    {SumAux NDec Acc2 R}
+                end
             end
         end
     end
-end
-proc {Sum N ?R}
-    local Zero in
-        Zero = 0
-        {SumAux N Zero R}
+    Sum=proc {$ N ?R}
+        local Zero in
+            Zero = 0
+            {SumAux N Zero R}
+        end
     end
 end
-local R in
-    {Sum 3 R}
-    {Browse R}
-end
-
 
 /* Exo 2 */
+
 % [1]
 % [1 2 3]
 % nil
@@ -97,3 +71,34 @@ end
 {Browse '|'(1:1 2:'|'(1:2 2:'|'(1:3 2:nil)))}
 {Browse nil}
 {Browse state(1:4 2:f 3:3)}
+
+/* Exo 3 */
+
+% 1.
+proc {Q A} {P A+1} end
+Ec = E|{P->E(P)}
+   = {P->E(P)}
+
+% 2.
+proc {P} {Browse A} end
+Ec = {Browse->E(Browse)}
+
+% 3.
+local P Q in
+    % {P->p, Q->q}
+
+    proc {P A R} R=A+2 end % Ec = {}
+    
+
+    local P R in
+        % {Q->q, P->p2, R->r}
+
+        fun {Q A}
+            {P A R}
+            R
+        end % Ec = {R->r, P->p2}
+
+        proc {P A R} R=A-2 end % Ec = {}
+    end
+    {Browse {Q 4}} % 2 car on appel p2
+end
