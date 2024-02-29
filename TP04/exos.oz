@@ -1,67 +1,119 @@
 /* Exo 1 */
 
-% Explication :
-% TODO
+% 1. Explication :
+% -- Définition d'une procédure:
+%
+% (<x>=proc {$ <x>_1 ... <x>_n} <s> end, E)
+%
+% On crée un environement contextuel pour la procédure:
+% E_c=E|{<z>__>, ..., <z>_n}
+% (restriction de E aux identificateurs libres <z>_n se trouvant dans <s>)
+%
+% On rajoute alors le binding suivant dans la mémoire:
+% x=(proc {$ <x>_1 ... <x>_n} <s> end, E_c)
+%
+% -- Appel d'une procédure
+%
+% ({<x> <y>_1 ... <y>_n}, E)
+% with E(<x>)=(proc {$ <z>_1 ... <z>_n} <s> end, E_c)
+%
+% On rajoute à la stack sémantique l'instruction:
+% (<s>, E_c + {<z>_1->E(<y>_1), ..., <z>_n->E(<y>_n)})
 
+% 2. Etat de mémoire:
+% Lors de la définition de P:
+%   E={Browse->browse, P->p, Z->z}
+%   On va créer l'environment contextuel de la procédure Ec
+%   Ec=E|{Z->z}={Z->z}
+
+([
+    (local P in ... end, {Browse->browse}),
+], {
+    browse=(proc {$ X} ... end, ...)
+})
+=>
+([
+    (local Z in ... end
+     local B A in ... end, {Browse->browse, P->p}),
+], {
+    browse=(proc {$ X} ... end, ...),
+    p
+})
+=> % sequential composition split
+([
+    (local Z in ... end, {Browse->browse, P->p}),
+    (local B A in ... end, {Browse->browse, P->p}),
+], {
+    browse=(proc {$ X} ... end, ...),
+    p
+})
+=> % forward two steps (local, seq. composition)
+([
+    (Z=1, {Browse->browse, P->p, Z->z}),
+    (proc {P X Y} Y=X+Z end, {Browse->browse, P->p, Z->z}),
+    (local B A in ... end, {Browse->browse, P->p}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    p, z
+})
+=>
 ([
     (proc {P X Y} ... end, {Browse->browse, P->p, Z->z}),
-    (local B A in ... end, {Browse->browse, P->p})
- ],{
-    browse=(proc {$ X} ... end, {...}),
-    p, z=1
- })
-=> % TODO on rajoute toute la proc sans rien evaluer? C'est bien ça le concept de lazy evaluation ?
+    (local B A in ... end, {Browse->browse, P->p}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    p, z=1,
+})
+=> % Déclaration proc
 ([
-    (local B A in ... end, {Browse->browse, P->p})
- ],{
-    browse=(proc {$ X} ... end, {...}),
-    p=(proc {P X Y} Y=X+Z end, {Browse->browse, P->p, Z->z}),
+    (local B A in ... end, {Browse->browse, P->p}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    p=(proc {P X Y} Y=X+Z end, {Z->z}),
     z=1,
- })
-=>
+})
+=> % 3 steps: local B, local A, seq. split
 ([
-    (A=10
-     {P A B}
-     {Browse B}, {Browse->browse, P->p, A->a, B->b})
- ],{
-    browse=(proc {$ X} ... end, {...}),
-    p=(proc {P X Y} Y=X+Z end, {Browse->browse, P->p, Z->z}),
-    z=1, a, b
- })
-=>
-([
+    (A=10, {Browse->browse, P->p, A->a, B->b}),
     ({P A B}
-     {Browse B}, {Browse->browse, P->p, A->a, B->b})
- ],{
-    browse=(proc {$ X} ... end, {...}),
-    p=(proc {P X Y} Y=X+Z end, {Browse->browse, P->p, Z->z}),
-    z=1, a=10, b
- })
-=> % TODO est-ce que l'on rajoute la proc à la stack ?
+     {Browse B}, {Browse->browse, P->p, A->a, B->b}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    p=(proc {P X Y} Y=X+Z end, {Z->z}),
+    z=1, a, b,
+})
+=> % 2 steps: assignement, seq. split
 ([
-    (B=A+Z end, {Browse->browse, P->p, Z->z, B->b, A->a}),
-    ({Browse B}, {Browse->browse, P->p, A->a, B->b})
- ],{
-    browse=(proc {$ X} ... end, {...}),
-    p=(proc {P X Y} Y=X+Z end, {Browse->browse, P->p, Z->z}),
-    z=1, a=10, b
- })
+    ({P A B}, {Browse->browse, P->p, A->a, B->b}),
+    ({Browse B}, {Browse->browse, P->p, A->a, B->b}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    p=(proc {P X Y} Y=X+Z end, {Z->z}),
+    z=1, a=10, b,
+})
 =>
 ([
-    ({Browse B}, {Browse->browse, P->p, A->a, B->b})
- ],{
-    browse=(proc {$ X} ... end, {...}),
-    p=(proc {P X Y} Y=X+Z end, {Browse->browse, P->p, Z->z}),
-    z=1, a=10, b=11
- })
+    (Y=X+Z, {Z->z, X->a, Y->b}),
+    ({Browse B}, {Browse->browse, P->p, A->a, B->b}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    p=(proc {P X Y} Y=X+Z end, {Z->z}),
+    z=1, a=10, b,
+})
 =>
+([
+    ({Browse B}, {Browse->browse, P->p, A->a, B->b}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    p=(proc {P X Y} Y=X+Z end, {Z->z}),
+    z=1, a=10, b=11,
+})
+=> % Application de browse qui imprime E(B)=b=11
 ([],{
-    browse=(proc {$ X} ... end, {...}),
-    p=(proc {P X Y} Y=X+Z end, {Browse->browse, P->p, Z->z}),
-    z=1, a=10, b=11
- })
-% End of program
-
+    browse=(proc {$ X} ... end, ...),
+    p=(proc {P X Y} Y=X+Z end, {Z->z}),
+    z=1, a=10, b=11,
+})
 
 /* Exo 2 */
 
@@ -215,111 +267,157 @@ local Y LB in
             else Z=Y end
         end
     end
-    local Y Z in %
+    local Y Z N5 in %
         Y=15 %
-        {LB 5 Z}
+        N5=5 %
+        {LB N5 Z} %
         {Browse Z}
     end
 end
 
-% TODO, when do I split a semantic instruction into multiple ?
-
 ([
-    (Y=10
-     LB=proc {$ X ?Z} %
-        local Cond in %
-            Cond=(X>=Y) %
-            if Cond then Z=X %
-            else Z=Y end
-        end
-    end
-    local Y Z in %
-        Y=15 %
-        {LB 5 Z}
-        {Browse Z}
-    end
-    ,{Browse->browse, Y->y1, LB->lb})
- ],{
-    browse=(proc {$ X} ... end, {...}),
-    y1, lb
- })
+    (local Y LB in ... end, {Browse->browse}),
+],{
+    browse=(proc {$ X} ... end, ...),
+})
+=> % 3 steps: 2*local, seq. split
+([
+    (Y=10, {Browse->browse, Y->y, LB->lb}),
+    (LB=proc {$ X ?Z} ... end
+     local Y Z N5 in ... end, {Browse->browse, Y->y, LB->lb}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    y, lb,
+})
+=> % 2 steps: assignment, seq. split
+([
+    (LB=proc {$ X ?Z} ... end, {Browse->browse, Y->y, LB->lb}),
+    (local Y Z N5 in ... end, {Browse->browse, Y->y, LB->lb}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    y=10, lb,
+})
 =>
 ([
-    (LB=proc {$ X ?Z} %
-        local Cond in %
-            Cond=(X>=Y) %
-            if Cond then Z=X %
-            else Z=Y end
-        end
-    end
-    local Y Z in %
-        Y=15 %
-        {LB 5 Z}
-        {Browse Z}
-    end
-    ,{Browse->browse, Y->y1, LB->lb})
- ],{
-    browse=(proc {$ X} ... end, {...}),
-    y1=10, lb
- })
-=>
+    (local Y Z N5 in ... end, {Browse->browse, Y->y, LB->lb}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    lb=(proc {$ X ?Z} ... end, {Y->y}),
+    y=10,
+})
+=> % 4 steps: 3*local, seq. split
 ([
-    (
-    local Y Z in %
-        Y=15 %
-        {LB 5 Z}
-        {Browse Z}
-    end
-    ,{Browse->browse, Y->y1, LB->lb})
- ],{
-    browse=(proc {$ X} ... end, {...}),
-    y1=10,
-    lb=(proc {$ X ?Z} %
-        local Cond in %
-            Cond=(X>=Y) %
-            if Cond then Z=X %
-            else Z=Y end
-        end
-    end, {Browse->browse, Y->y1, LB->lb})
- })
-=>
+    (Y=15, {Browse->browse, Y->y2, LB->lb, Z->z, N5->n5}),
+    (N5=5
+     {LB N5 Z}
+     {Browse Z}, {Browse->browse, Y->y2, LB->lb, Z->z, N5->n5}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    lb=(proc {$ X ?Z} ... end, {Y->y}),
+    y=10,
+    y2, z, n5
+})
+=> % 4 steps: assignment, seq. split, assignment, seq. split
 ([
-    (
-    Y=15 %
-    {LB 5 Z}
-    {Browse Z}
-    ,{Browse->browse, Y->y2, LB->lb, Z->z})
- ],{
-    browse=(proc {$ X} ... end, {...}),
-    y1=10,
-    lb=(proc {$ X ?Z} %
-        local Cond in %
-            Cond=(X>=Y) %
-            if Cond then Z=X %
-            else Z=Y end
-        end
-    end, {Browse->browse, Y->y1, LB->lb}),
-    y2,
-    z
- })
-=>
-([
-    (
-    {LB 5 Z}
-    {Browse Z}
-    ,{Browse->browse, Y->y2, LB->lb, Z->z})
- ],{
-    browse=(proc {$ X} ... end, {...}),
-    y1=10,
-    lb=(proc {$ X ?Z} %
-        local Cond in %
-            Cond=(X>=Y) %
-            if Cond then Z=X %
-            else Z=Y end
-        end
-    end, {Browse->browse, Y->y1, LB->lb}),
+    ({LB N5 Z}, {Browse->browse, Y->y2, LB->lb, Z->z, N5->n5}),
+    ({Browse Z}, {Browse->browse, Y->y2, LB->lb, Z->z, N5->n5}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    lb=(proc {$ X ?Z} ... end, {Y->y}),
+    y=10,
     y2=15,
-    z
- })
+    n5=5,
+    z,
+})
+=> % procedure call
+([
+    (local Cond in
+        Cond=(X>=Y)
+        if Cond then Z=X
+        else Z=Y end
+     end, {Y->y, X->n5, Z->z}),
+    ({Browse Z}, {Browse->browse, Y->y2, LB->lb, Z->z, N5->n5}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    lb=(proc {$ X ?Z} ... end, {Y->y}),
+    y=10,
+    y2=15,
+    n5=5,
+    z,
+})
+=> % 2 steps: ...
+([
+    (Cond=(X>=Y), {Y->y, X->n5, Z->z, Cond->cond}),
+    (if Cond then Z=X
+     else Z=Y end, {Y->y, X->n5, Z->z, Cond->cond}),
+    ({Browse Z}, {Browse->browse, Y->y2, LB->lb, Z->z, N5->n5}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    lb=(proc {$ X ?Z} ... end, {Y->y}),
+    y=10,
+    y2=15,
+    n5=5,
+    z,
+    cond,
+})
 =>
-% TODO fix the instruction split and continue
+([
+    (if Cond then Z=X
+     else Z=Y end, {Y->y, X->n5, Z->z, Cond->cond}),
+    ({Browse Z}, {Browse->browse, Y->y2, LB->lb, Z->z, N5->n5}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    lb=(proc {$ X ?Z} ... end, {Y->y}),
+    y=10,
+    y2=15,
+    n5=5,
+    z,
+    cond=false,
+})
+=>
+([
+    (Z=Y, {Y->y, X->n5, Z->z, Cond->cond}),
+    ({Browse Z}, {Browse->browse, Y->y2, LB->lb, Z->z, N5->n5}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    lb=(proc {$ X ?Z} ... end, {Y->y}),
+    y=10,
+    y2=15,
+    n5=5,
+    z,
+    cond=false,
+})
+=>
+([
+    ({Browse Z}, {Browse->browse, Y->y2, LB->lb, Z->z, N5->n5}),
+],{
+    browse=(proc {$ X} ... end, ...),
+    lb=(proc {$ X ?Z} ... end, {Y->y}),
+    y=10,
+    y2=15,
+    n5=5,
+    z=10,
+    cond=false,
+})
+=>
+([],{
+    browse=(proc {$ X} ... end, ...),
+    lb=(proc {$ X ?Z} ... end, {Y->y}),
+    y=10,
+    y2=15,
+    n5=5,
+    z=10, % printed
+    cond=false,
+})
+
+
+
+
+
+
+
+
+
+
+
+
