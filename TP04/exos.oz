@@ -24,7 +24,8 @@
 % Lors de la définition de P:
 %   E={Browse->browse, P->p, Z->z}
 %   On va créer l'environment contextuel de la procédure Ec
-%   Ec=E|{Z->z}={Z->z}
+%   Ec= E|{Z->z}
+%     = {Z->z}
 
 ([
     (local P in ... end, {Browse->browse}),
@@ -69,7 +70,7 @@
     (local B A in ... end, {Browse->browse, P->p}),
 ],{
     browse=(proc {$ X} ... end, ...),
-    p=(proc {P X Y} Y=X+Z end, {Z->z}),
+    p=(proc {$ X Y} Y=X+Z end, {Z->z}),
     z=1,
 })
 => % 3 steps: local B, local A, seq. split
