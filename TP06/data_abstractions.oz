@@ -27,7 +27,6 @@ in
 end
 
 % (Functional) ADT
-% description: TODO
 local 
     NewStack Push Pop IsEmpty
 in
@@ -51,7 +50,6 @@ in
 end
 
 % Statefull ADT
-% description: TODO
 local
 NewStack Push Pop IsEmpty
 in
@@ -88,7 +86,6 @@ in
 end
 
 % Functional Object
-% description: TODO
 local 
     NewStack
 in
@@ -120,7 +117,6 @@ in
 end
 
 % (Statefull) Object
-% description: TODO
 local NewStack in
     fun {NewStack}
         S = {NewCell nil}
