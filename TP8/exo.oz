@@ -268,46 +268,37 @@ local
         end
     in {Aux N} end
     %
-    % Returns a list
-    fun {Counter S}
-        case S
-        of Letter|T then L in
-            L = ... % TODO (peut-être faut-il se souvenir de previous ?)
-            L|{Counter T}
-        else nil end
-    end
+    fun {Counter Cs}
+        fun {UpdateCnt Cnt C}
+            case Cnt
+            of (X#OccX)|T then 
+                if X==C then (X#OccX+1)|T
+                else (X#OccX)|{UpdateCnt T C} end
+            else C#1|nil end
+        end
+        % Cnt : [a#1 b#4]
+        fun {Aux Cs Cnt}
+            case Cs
+            of C|T then NewCnt in
+                NewCnt = {UpdateCnt Cnt C}
+                NewCnt|{Aux T NewCnt}
+            else nil end
+        end
+    in thread {Aux Cs nil} end end
     %
 in
     % Usage
-    local InS in
-        {Browse {Counter InS}}
-        InS=a|b|a|c|_
+    % local InS in
+    %     {Browse {Counter InS}}
+    %     InS=a|b|a|c|_
+    % end
+    local Cs Counters in
+        thread Cs = {ProduceLetters 5} end
+        Counters = {Counter Cs}
+        {Browse Counters}
     end
+    % TODO 
+    % Pourquoi c'est super lent alors qu'il y a
+    % pas de Delay ??
 end
 
-
-
-
-%
-declare
-fun {Counter L}
-   fun {UpdateCounter L C}
-      case L
-      of (S#N)|T then
-        if S == C then (C#N+1)|T
-        else (S#N)|{UpdateCounter T C} end
-      else C#1|nil end
-   end
-   fun {CounterAux L P}
-      case L of C|T then U in
-        U = {UpdateCounter P C}
-        U|{CounterAux T U}
-      else nil end
-   end
-in
-   thread {CounterAux L nil} end
-end
-
-declare InS
-{Browse {Counter InS}}
-InS = a|b|a|c|_
