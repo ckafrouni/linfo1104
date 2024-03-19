@@ -1,19 +1,32 @@
 % Types of data abstractions
 
 declare
+% Simple version
+% proc {NewWrapper ?Wrap ?Unwrap}
+%     Key={NewName}
+% in
+%     fun {Wrap X}
+%         fun {$ K} if K==Key then X end end
+%     end
+%     fun {Unwrap W}
+%         {W Key}
+%     end
+% end
+% Advanced Version
 proc {NewWrapper ?Wrap ?Unwrap}
     Key={NewName}
 in
     fun {Wrap X}
-        fun {$ K} if K==Key then X end end
+        {Chunk.new w(Key:X)}
     end
     fun {Unwrap W}
-        {W Key}
+        try W.Key
+        catch  _ then raise error(unwrap(W)) end
+        end
     end
 end
 
-
-% Functional ADT
+% (Functional) ADT
 % description: TODO
 local 
     NewStack Push Pop IsEmpty
@@ -106,7 +119,7 @@ in
 
 end
 
-% Statefull Object
+% (Statefull) Object
 % description: TODO
 local NewStack in
     fun {NewStack}
