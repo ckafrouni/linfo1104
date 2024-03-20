@@ -4,73 +4,78 @@
 % Logic Operators                             %
 % ------------------------------------------- %
 
-
-
 declare
-fun {NOT A} (A+1) mod 2 end
-%
-fun {AND A B} A*B end
-fun {NAND A B} {NOT {AND A B}} end
-%
-fun {OR A B} A+B - A*B end
-fun {NOR A B} {NOT {OR A B}} end
-fun {XOR A B} (A+B) mod 2 end
-fun {XNOR A B} {NOT {XOR A B}} end
-%
-proc {TestGate Label Gate}
-    {Browse 0#Label#0#'='#{Gate 0 0}}
-    {Browse 0#Label#1#'='#{Gate 0 1}}
-    {Browse 1#Label#0#'='#{Gate 1 0}}
-    {Browse 1#Label#1#'='#{Gate 1 1}}
-end
-% {TestGate 'xnor' XNOR}
-% {Browse _}
+Ops = ops(
+    % Helper methods
+    'testBinary': proc {$ Label}
+        {Browse 'Testing op : '#Label}
+        {Browse 0#Label#0#{Ops.Label 0 0}}
+        {Browse 0#Label#1#{Ops.Label 0 1}}
+        {Browse 1#Label#0#{Ops.Label 1 0}}
+        {Browse 1#Label#1#{Ops.Label 1 1}}
+    end
+    'testUnary': proc {$ Label}
+        {Browse 'Testing op : '#Label}
+        {Browse 0#{Ops.Label 0}}
+        {Browse 1#{Ops.Label 1}}
+    end
+    % Defined ops
+    'not': fun {$ A} (A+1) mod 2 end
+    'and': fun {$ A B} A*B end
+    'nand': fun {$ A B} 1 - A*B end % {NOT {AND A B}}
+    'or': fun {$ A B} A+B - A*B end
+    'nor': fun {$ A B} 1 - (A+B - A*B) end % {NOT {OR A B}}
+    'xor': fun {$ A B} (A+B) mod 2 end
+    'xnor': fun {$ A B} {Ops.'not' {Ops.'xor' A B}} end
+)
+% {Ops.'testBinary' 'and'}
+% {Ops.'testUnary' 'not'}
 
 % ------------------------------------------- %
 % Gates                                       %
 % ------------------------------------------- %
 
 declare
-fun {MakeUnaryGate F}
-    fun {$ Xs}
-        fun {Gate Xs}
-            case Xs
-            of H|T then {F H}|{Gate T}
-            else nil end
-        end
-    in thread {Gate Xs} end end
-end
-fun {MakeBinaryGate F}
-    fun {$ Xs Ys}
-        fun {Gate Xs Ys}
-            case Xs#Ys
-            of (Xh|Xt)#(Yh|Yt) then {F Xh Yh}|{Gate Xt Yt}
-            else nil end
-        end
-    in thread {Gate Xs Ys} end end
-end
-NOTGate = {MakeUnaryGate NOT}
-ANDGate = {MakeBinaryGate AND}
-NANDGate = {MakeBinaryGate NAND}
-ORGate = {MakeBinaryGate OR}
-NORGate = {MakeBinaryGate NOR}
-XORGate = {MakeBinaryGate XOR}
-XNORGate = {MakeBinaryGate XNOR}
-% {Browse 'NOTGate'#{NOTGate [0 0 1 1]}}
-% {Browse 'ANDGate'#{ANDGate [0 0 1 1] [0 1 0 1]}}
-
-declare
-fun {GateRouter Label}
-    case Label
-    of 'not' then NOTGate
-    [] 'and' then ANDGate
-    [] 'nand' then NANDGate
-    [] 'or' then ORGate
-    [] 'nor' then NORGate
-    [] 'xor' then XORGate
-    [] 'xnor' then XNORGate
-    else raise badGateSpec(Label) end end
-end
+Gates = gates(
+    % Helper methods
+    'makeUnary': fun {$ F}
+        fun {$ Xs}
+            fun {Gate Xs}
+                case Xs
+                of H|T then {F H}|{Gate T}
+                else nil end
+            end
+        in thread {Gate Xs} end end
+    end
+    'makeBinary': fun {$ F}
+        fun {$ Xs Ys}
+            fun {Gate Xs Ys}
+                case Xs#Ys
+                of (Xh|Xt)#(Yh|Yt) then {F Xh Yh}|{Gate Xt Yt}
+                else nil end
+            end
+        in thread {Gate Xs Ys} end end
+    end
+    'test': proc {$ Label}
+        Xs = [0 0 1 1]
+        Ys = [0 1 0 1]
+    in
+        {Browse 'Testing gate : '#Label}
+        {Browse Xs}
+        {Browse Ys}
+        {Browse {Gates.Label Xs Ys}}
+    end
+    % Defined gates
+    'not': {Gates.'makeUnary' Ops.'not'}
+    'and': {Gates.'makeBinary' Ops.'and'}
+    'nand': {Gates.'makeBinary' Ops.'nand'}
+    'or': {Gates.'makeBinary' Ops.'or'}
+    'nor': {Gates.'makeBinary' Ops.'nor'}
+    'xor': {Gates.'makeBinary' Ops.'xor'}
+    'xnor': {Gates.'makeBinary' Ops.'xnor'}
+)
+% {Gates.test 'and'}
+% {Gates.test 'or'}
 
 
 % ------------------------------------------- %
@@ -79,19 +84,17 @@ end
 
 declare
 fun {Simulate G Ss}
-    fun {SimUnary OpLabel Xi}
-        % Gate must be unary
-        Gate = {GateRouter OpLabel}
+    fun {SimUnary Label Xi}
+        Gate = Gates.Label  % Gate must be unary
     in
         case Xi
         of input(X) then {Gate Ss.X}
-        [] gate(value:OpLabel 1:Xi) then {Gate {SimUnary OpLabel Xi}}
-        [] gate(value:OpLabel 1:Xi 2:Yi) then {Gate {SimBinary OpLabel Xi Yi}}
+        [] gate(value:Label 1:Xi) then {Gate {SimUnary Label Xi}}
+        [] gate(value:Label 1:Xi 2:Yi) then {Gate {SimBinary Label Xi Yi}}
         else raise notValidInput(Xi) end end
     end
-    fun {SimBinary OpLabel Xi Yi}
-        % Gate must be binary
-        Gate = {GateRouter OpLabel}
+    fun {SimBinary Label Xi Yi}
+        Gate = Gates.Label % Gate must be binary
     in
         case Xi#Yi
         of input(X)#input(Y) then {Gate Ss.X Ss.Y}
@@ -102,8 +105,8 @@ fun {Simulate G Ss}
 in
     thread 
         case G
-        of gate(value:OpLabel 1:Xi) then {SimUnary OpLabel Xi}
-        [] gate(value:OpLabel 1:Xi 2:Yi) then {SimBinary OpLabel Xi Yi}
+        of gate(value:Label 1:Xi) then {SimUnary Label Xi}
+        [] gate(value:Label 1:Xi 2:Yi) then {SimBinary Label Xi Yi}
         else raise notValidGate(G) end end
     end
 end
@@ -115,4 +118,24 @@ local G Ss in
         gate(value:'not' input(z)))
     {Browse {Simulate G Ss}}
     Ss = input(x:1|0|1|0|_ y:1|1|0|1|_ z:1|1|0|0|_)
+end
+
+
+% ------------------------------------------- %
+% Circuits                                    %
+% ------------------------------------------- %
+
+% Slides 100
+declare
+proc {FullAdder X Y Z ?C ?S}
+    A B D E F
+in
+    A = {Gates.'and' X Y}
+    B = {Gates.'and' Y Z}
+    D = {Gates.'and' X Z}
+    E = {Gates.'xor' X Y}
+    F = {Gates.'or' B D}
+    %
+    C = {Gates.'or' A F}
+    S = {Gates.'xor' E Z}
 end

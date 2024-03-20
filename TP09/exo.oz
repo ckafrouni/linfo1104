@@ -26,6 +26,7 @@ XORGate = {MakeBinaryGate XOR}
 /* Exo 4 */
 
 % Bascule RS
+% slide 102 : sequential logic
 % TODO plus d'explication stp
 local 
     fun {DelayStream Xs} 0|Xs end
