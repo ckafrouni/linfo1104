@@ -1,31 +1,22 @@
+/* Exo 1 */
+
+% TODO on paper
+
+
+/* Exo 2 */
+
+% TODO ressembles a question from TP08
+
+
 /* Exo 3 */
 
-declare
-fun {NOT A} (A+1) mod 2 end
-fun {AND A B} A*B end
-fun {OR A B} A+B - A*B end
-fun {NOR A B} {NOT {OR A B}} end
-fun {XOR A B} (A+B) mod 2 end
-
-declare
-fun {MakeBinaryGate F}
-    fun {$ Xs Ys}
-        fun {Gate Xs Ys}
-            case Xs#Ys
-            of (Xh|Xt)#(Yh|Yt) then {F Xh Yh}|{Gate Xt Yt}
-            else nil end
-        end
-    in thread {Gate Xs Ys} end end
-end
-ANDGate = {MakeBinaryGate AND}
-ORGate = {MakeBinaryGate OR}
-NORGate = {MakeBinaryGate NOR}
-XORGate = {MakeBinaryGate XOR}
+% Done in TP08 supplementary exercices
+% Must run first to load Gates ...
 
 
 /* Exo 4 */
 
-% Bascule RS
+% RS Flip
 % slide 102 : sequential logic
 % TODO plus d'explication stp
 local 
@@ -36,14 +27,19 @@ local
     Qs
     NotQs
     %
-    proc {Bascule Rs Ss Qs NotQs}
+    proc {Flip Rs Ss Qs NotQs}
         DelayedQs = {DelayStream Qs}
         DelayedNotQs = {DelayStream NotQs}
     in
-        Qs = {NORGate Rs DelayedNotQs}
-        NotQs = {NORGate Ss DelayedQs}
+        Qs = {Gates.'nor' Rs DelayedNotQs}
+        NotQs = {Gates.'nor' Ss DelayedQs}
     end
 in
-    {Bascule Rs Ss Qs NotQs}
+    {Flip Rs Ss Qs NotQs}
     {Browse Qs#NotQs}
 end
+
+
+/* Exo 5 */
+
+% TODO

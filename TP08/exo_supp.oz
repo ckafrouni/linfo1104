@@ -30,11 +30,12 @@ Ops = ops(
 )
 % {Ops.'testBinary' 'and'}
 % {Ops.'testUnary' 'not'}
-
+%
+%
 % ------------------------------------------- %
 % Gates                                       %
 % ------------------------------------------- %
-
+%
 declare
 Gates = gates(
     % Helper methods
