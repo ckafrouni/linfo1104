@@ -126,17 +126,45 @@ end
 % Circuits                                    %
 % ------------------------------------------- %
 
+% So gates are simple combinational functions:
+% zi = xi AND yi
+%
+% <gate> ::= gate( op:<op> <input>+ )
+% 
+% <op> ::= 'not' | 'and' | 'nand' | 'or' | 'nor' | 'xor' | 'xnor'
+% <input> ::= input(<atom>) | <gate>
+%
+% <circuit> ::= circuit( inputs:<tuple <atom>> outputs:<tuple<atom>>  )
+
 % Slides 100
-declare
-proc {FullAdder X Y Z ?C ?S}
-    A B D E F
-in
-    A = {Gates.'and' X Y}
-    B = {Gates.'and' Y Z}
-    D = {Gates.'and' X Z}
-    E = {Gates.'xor' X Y}
-    F = {Gates.'or' B D}
-    %
-    C = {Gates.'or' A F}
-    S = {Gates.'xor' E Z}
-end
+% declare
+% proc {FullAdder X Y Z ?C ?S}
+%     A B D E F
+% in
+%     A = {Gates.'and' X Y}
+%     B = {Gates.'and' Y Z}
+%     D = {Gates.'and' X Z}
+%     E = {Gates.'xor' X Y}
+%     F = {Gates.'or' B D}
+%     %
+%     C = {Gates.'or' A F}
+%     S = {Gates.'xor' E Z}
+% end
+FA = circuit(
+    inputs: x#y#z
+    outputs: c#s
+    s: gate(
+        op: 'xor'
+        input(z)
+        gate(
+            op: 'xor'
+            input(x)
+            input(y)
+        )
+    )
+    c: gate(op: 'or' input(a) input(f))
+    a: gate(op: 'and' input(x) input(y))
+    f: gate(op: 'or' input(b) input(d))
+    b: gate(op: 'and' input(x) input(y))
+    d: gate(op: 'and' input(x) input(z))
+)
