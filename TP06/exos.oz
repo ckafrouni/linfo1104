@@ -196,13 +196,11 @@ fun {Shuffle Xs}
     end
     fun {ShuffleAux N}
         if N == 0 then nil
-        else
-            local I X in
-                I = {FindIndex}
-                X = Arr.I
-                Arr.I := nil
-                X|{ShuffleAux N-1}
-            end
+        else I X in
+            I = {FindIndex}
+            X = Arr.I
+            Arr.I := nil
+            X|{ShuffleAux N-1}
         end
     end
 in
