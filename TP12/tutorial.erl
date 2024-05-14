@@ -1,11 +1,6 @@
--module(condensed).
--export([
-    main/1,
-    greet/1,
-    produce_list/0,
-    add/2,
-    factorial/1
-]).
+-module(tutorial).
+
+-export([main/1, greet/1, produce_list/0, add/2, factorial/1]).
 
 % The -module and -export directives aren't necessary if running from escript
 % But they are necessary if running from the Erlang shell or compiled
